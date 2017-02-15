@@ -1,0 +1,37 @@
+FROM centos:6
+MAINTAINER Nomuna Batsukh "batsukh@appplant.de"
+
+RUN rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+
+RUN    yum -y update \
+    && yum -y remove git \
+    && yum -y install epel-release \
+    && yum -y install https://centos6.iuscommunity.org/ius-release.rpm \
+    && yum -y install tree openssh-server openssh-clients golang tar git2u python27 \
+    && yum -y clean all
+
+RUN    mkdir -p /opt/ruby-2.3.0/ \
+    && curl -s https://s3.amazonaws.com/pkgr-buildpack-ruby/current/centos-6/ruby-2.3.0.tgz | tar xzC /opt/ruby-2.3.0/
+
+ENV GOPATH /go
+ENV GEM_HOME $HOME/.gem
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
+ENV PATH /opt/ruby-2.3.0/bin:$GEM_HOME/bin/:$GOPATH/bin:$PATH
+
+RUN    go get golang.org/x/crypto/ssh \
+    && go get golang.org/x/crypto/ssh/agent \
+    && git -C $GOPATH/src/golang.org/x/crypto reset --hard abc5fa7ad02123a41f02bf1391c9760f7586e608
+
+RUN    gem update  --no-ri --no-rdoc --system \
+    && gem install --no-ri --no-rdoc rake os test-unit
+
+RUN    mkdir -p $HOME/.ssh \
+    && service sshd start \
+    && ssh-keygen -t rsa -q -f $HOME/.ssh/orbit.key -N "" \
+    && cp $HOME/.ssh/orbit.key.pub $HOME/.ssh/authorized_keys \
+    && ssh-keyscan -t rsa localhost > $HOME/.ssh/known_hosts
+
+RUN    echo $'\nservice sshd start\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.profile \
+    && echo $'\nservice sshd start\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.bash_profile
+
+WORKDIR $HOME/code

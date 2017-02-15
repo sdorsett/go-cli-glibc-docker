@@ -1,0 +1,33 @@
+FROM golang:1.7
+MAINTAINER Nomuna Batsukh "batsukh@appplant.de"
+
+RUN    apt-get update \
+    && apt-get install -y --no-install-recommends tree openssh-server openssh-client tar git python \
+    && apt-get clean \
+    && apt-get autoremove
+
+RUN    mkdir -p /opt/ruby-2.3.0/ \
+    && curl -s https://s3.amazonaws.com/pkgr-buildpack-ruby/current/debian-8/ruby-2.3.0.tgz | tar xzC /opt/ruby-2.3.0/
+
+ENV GEM_HOME $HOME/.gem
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
+ENV PATH /opt/ruby-2.3.0/bin:$GEM_HOME/bin:$PATH
+
+RUN    go get golang.org/x/crypto/ssh \
+    && go get golang.org/x/crypto/ssh/agent \
+    && git -C $GOPATH/src/golang.org/x/crypto reset --hard abc5fa7ad02123a41f02bf1391c9760f7586e608
+
+RUN    gem update  --no-ri --no-rdoc --system \
+    && gem install --no-ri --no-rdoc rake os test-unit
+
+RUN    mkdir -p $HOME/.ssh \
+    && /etc/init.d/ssh start \
+    && ssh-keygen -t rsa -q -f $HOME/.ssh/orbit.key -N "" \
+    && cp $HOME/.ssh/orbit.key.pub $HOME/.ssh/authorized_keys \
+    && ssh-keyscan -t ecdsa-sha2-nistp256 localhost > $HOME/.ssh/known_hosts
+
+RUN    echo PATH=$PATH >> /etc/profile \
+    && echo $'\n/etc/init.d/ssh start\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.profile \
+    && echo $'\n/etc/init.d/ssh start\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.bash_profile
+
+WORKDIR $HOME/code
