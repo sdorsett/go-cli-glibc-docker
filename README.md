@@ -21,7 +21,7 @@ To compile against musl:
 ## Development
 Build each docker image:
 
-    $ docker build -f Dockerfile.[glibc-2.12|glibc-2.14|musl] -t appplant/go-cli:[glibc-2.12|glibc-2.14|musl]
+    $ docker build -f Dockerfile.[glibc-2.12|glibc-2.14|musl] -t appplant/go-cli:[glibc-2.12|glibc-2.14|musl] .
 
 Open a shell to see if all works fine:
 
