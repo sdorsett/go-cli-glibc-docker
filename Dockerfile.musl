@@ -2,24 +2,31 @@ FROM golang:alpine
 MAINTAINER Sebastian Katzer "katzer@appplant.de"
 
 RUN    apk update \
-    && apk add --no-cache tree ruby openssh git tar python
+    && apk add --no-cache tree ruby openssh git tar python bash
 
-RUN    go get golang.org/x/crypto/ssh \
+RUN    chmod -R go=r $GOPATH \
+    && git config --global http.https://gopkg.in.followRedirects true \
+    && go get golang.org/x/crypto/ssh \
     && go get golang.org/x/crypto/ssh/agent \
     && git -C $GOPATH/src/golang.org/x/crypto reset --hard abc5fa7ad02123a41f02bf1391c9760f7586e608
 
 RUN    gem update  --no-ri --no-rdoc --system \
-    && gem install --no-ri --no-rdoc rake os test-unit
+    && gem install --no-ri --no-rdoc rake os test-unit \
+    && go get github.com/mattn/gom
+
+ENV ORBIT_KEY /root/.ssh/orbit.key
 
 RUN    mkdir -p $HOME/.ssh \
     && ssh-keygen -A \
     && /usr/sbin/sshd \
-    && ssh-keygen -t rsa -q -f $HOME/.ssh/orbit.key -N "" \
-    && cp $HOME/.ssh/orbit.key.pub $HOME/.ssh/authorized_keys \
+    && ssh-keygen -t rsa -q -f $ORBIT_KEY -N "" \
+    && cp $ORBIT_KEY.pub $HOME/.ssh/authorized_keys \
     && ssh-keyscan -t ecdsa-sha2-nistp256 localhost > $HOME/.ssh/known_hosts
 
 RUN    echo PATH=$PATH >> /etc/profile \
-    && echo $'\n/usr/sbin/sshd\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.profile \
-    && echo $'\n/usr/sbin/sshd\neval `ssh-agent -s`\nssh-add $HOME/.ssh/orbit.key\n' >> $HOME/.bash_profile
+    && echo $'\n/usr/sbin/sshd\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >> $HOME/.profile \
+    && echo $'\n/usr/sbin/sshd\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >> $HOME/.bash_profile
 
-WORKDIR $HOME/code
+ONBUILD ENV APP_HOME /root/code
+ONBUILD RUN mkdir -p $APP_HOME
+ONBUILD WORKDIR $APP_HOME
