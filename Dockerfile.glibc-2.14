@@ -34,6 +34,10 @@ RUN    echo PATH=$PATH >> /etc/profile \
     && echo '\n/etc/init.d/ssh start\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >> $HOME/.profile \
     && echo '\n/etc/init.d/ssh start\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >> $HOME/.bash_profile
 
+COPY mockup-tools/pqdb_sql.out /bin/
+COPY mockup-tools/dboutput.sh /root/mockup-tools/
+COPY mockup-tools/root.prof /root/profiles/
+
 ONBUILD ENV APP_HOME /root/code
 ONBUILD RUN mkdir -p $APP_HOME
 ONBUILD WORKDIR $APP_HOME
