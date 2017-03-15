@@ -1,3 +1,22 @@
-#!/bin/bash
+#!/bin/sh
 
-/root/mockup-tools/dboutput.sh
+if [ -z "$1" ]
+  then
+    echo "No argument supplied"
+    exit 1
+fi
+
+if [ "$1" == "/root/sql/invalid.sql" ]
+  then
+    echo "Invalid SQL"
+    exit 1
+fi
+
+cat <<EOF
+
+D
+-
+X
+
+USERINFO: [server1], [server1]linux:username
+EOF
