@@ -38,7 +38,6 @@ RUN    echo $'\nservice sshd start\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >
     && echo $'\nservice sshd start\neval `ssh-agent -s`\nssh-add $ORBIT_KEY\n' >> $HOME/.bash_profile
 
 COPY mockup-tools/pqdb_sql.out /bin/
-COPY mockup-tools/dboutput.sh /root/mockup-tools/
 COPY mockup-tools/root.prof /root/profiles/
 
 RUN mkdir /root/sql
