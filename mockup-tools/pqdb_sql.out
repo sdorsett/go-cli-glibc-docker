@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/root/mockup-tools/dboutput.sh
